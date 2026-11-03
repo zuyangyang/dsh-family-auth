@@ -1,6 +1,6 @@
 {
   "name": "dsh-family-auth",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Family data-authorization layer for DeepSeek Harness: who a conversation belongs to, and what they may read.",
   "license": "MIT",
   "type": "module",
