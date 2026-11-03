@@ -157,3 +157,55 @@ test('a disabled member loses access mid-session', () => {
   repo.updateUser(actor.id, { status: 'disabled' })
   assert.throws(() => auth.mustWrite(exec('s1'), 'ledger'), (error) => error.code === AUTH_ERROR.NEED_IDENTITY)
 })
+
+// ---------------------------------------------------------------- fallback
+
+test('unbound writes land in the shared bucket when a fallback owner is set', () => {
+  const { auth } = fixture({ fallbackOwner: 'default' })
+  const stamp = auth.mustWrite(exec('anonymous'), 'ledger')
+  assert.equal(stamp.ownerId, 'default')
+  assert.equal(stamp.anonymous, true)
+  assert.equal(stamp.actor, null)
+})
+
+test('unbound writes are refused when the fallback is switched off', () => {
+  const { auth } = fixture({ fallbackOwner: '' })
+  assert.throws(() => auth.mustWrite(exec('anonymous'), 'ledger'),
+    (error) => error.code === AUTH_ERROR.NEED_IDENTITY)
+})
+
+test('an unbound conversation can read the shared bucket and nothing else', () => {
+  const { auth } = fixture({ fallbackOwner: 'default' })
+  const scope = auth.readScope(exec('anonymous'), 'ledger')
+  assert.deepEqual([...scope], ['default'])
+})
+
+test('every member sees the shared bucket alongside their own rows', () => {
+  const { auth, repo, config } = fixture({ fallbackOwner: 'default' })
+  claimIdentity({ repo, sessionId: 's1', name: '杨', config })
+  const member = repo.addUser({ name: '小明' })
+  claimIdentity({ repo, sessionId: 's2', name: '小明', config })
+  const scope = auth.readScope(exec('s2'), 'ledger')
+  assert.deepEqual([...scope].sort(), ['default', member.id].sort())
+})
+
+test('the owner still sees everything, shared bucket included', () => {
+  const { auth, repo, config } = fixture({ fallbackOwner: 'default' })
+  claimIdentity({ repo, sessionId: 's1', name: '杨', config })
+  assert.equal(auth.readScope(exec('s1'), 'ledger'), null)
+})
+
+test('ownerLabel turns ids into names and the bucket into 未识别', () => {
+  const { auth, repo, config } = fixture({ fallbackOwner: 'default' })
+  const owner = claimIdentity({ repo, sessionId: 's1', name: '杨', config }).actor
+  assert.equal(auth.ownerLabel(owner.id), '杨')
+  assert.equal(auth.ownerLabel('default'), '未识别')
+  assert.equal(auth.ownerLabel(null), '未识别')
+})
+
+test('anonymous writes are audited as such', () => {
+  const { auth, repo } = fixture({ fallbackOwner: 'default' })
+  auth.mustWrite(exec('anonymous'), 'ledger')
+  const [entry] = repo.auditLog()
+  assert.equal(entry.reason, 'anonymous-fallback')
+})
