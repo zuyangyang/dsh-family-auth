@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- 默认数据目录改成 <DSH_HOME> 下（原来写死绝对路径）。不同 profile（不同 DSH_HOME）默认各存各的；desktop 的 DSH_HOME 就是 ~/.dsh，行为不变。
+
 ## 1.0.0
 
 - 家庭成员与授权（grant）的唯一来源：谁在说话、能看谁的、能改谁的。
