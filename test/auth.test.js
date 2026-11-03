@@ -209,3 +209,13 @@ test('anonymous writes are audited as such', () => {
   const [entry] = repo.auditLog()
   assert.equal(entry.reason, 'anonymous-fallback')
 })
+
+test('a plugin can look a member up by the name the user typed', () => {
+  const { auth, repo, config } = fixture()
+  claimIdentity({ repo, sessionId: 's1', name: '杨', config })
+  const found = auth.findMember('杨')
+  assert.equal(found.name, '杨')
+  assert.equal(found.id, repo.findUserByName('杨').id)
+  assert.equal(found.role, 'owner')
+  assert.equal(auth.findMember('查无此人'), null)
+})
