@@ -1,0 +1,8 @@
+# dsh-family-auth bundle layer.
+#
+# Declared via the `dsh.bundle.patch` manifest, so `dsh plugin add` mounts this
+# insert automatically. Deployment settings live in the profile's
+# cordis.patch.yml under `- id: dsh-family-auth`.
+- insert:
+    - id: dsh-family-auth
+      name: dsh-family-auth
